@@ -2,7 +2,7 @@ use std::io;
 use std::io::ErrorKind;
 use bytes::{BufMut, BytesMut};
 
-use tokio::codec::{Decoder, Encoder};
+use tokio_util::codec::{Decoder, Encoder};
 
 use num_derive::FromPrimitive;
 
@@ -35,18 +35,6 @@ const HEADER_LENGTH: usize = 2;
 const MAX_PAYLOAD_LENGTH: usize = 18;
 
 pub struct CanTCPCodec;
-
-#[derive(Debug)]
-pub struct CanTCPPacket {
-    pub cmd: Rs232CanCmd,
-    data: Vec<u8>
-}
-
-impl CanTCPPacket {
-    pub fn data_len(self) -> usize {
-        self.data.len()
-    }
-}
 
 impl Decoder for CanTCPCodec {
     type Item = CanTCPPacket;
@@ -103,8 +91,22 @@ impl Encoder for CanTCPCodec {
 
         dst.put_u8(item.data.len() as u8);
         dst.put_u8(item.cmd as u8);
-        dst.put(item.data);
+        dst.put_slice(&item.data);
 
         Ok(())
     }
 }
+
+
+#[derive(Debug)]
+pub struct CanTCPPacket {
+    pub cmd: Rs232CanCmd,
+    pub data: Vec<u8>
+}
+
+impl CanTCPPacket {
+    pub fn data_len(self) -> usize {
+        self.data.len()
+    }
+}
+
